@@ -1,0 +1,3 @@
+Press CTRL+SHIFT+P
+Start the android emulator (cold boot)
+Press F5
