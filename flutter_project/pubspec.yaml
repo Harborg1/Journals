@@ -30,7 +30,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  
+  encrypt: ^5.0.3
+  flutter_secure_storage: ^9.0.0
   firebase_core: ^3.14.0  # <--- add this line
   firebase_auth: ^5.3.4
   cloud_firestore: ^5.6.9

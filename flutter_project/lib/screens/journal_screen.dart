@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'welcome_screen.dart';
+import 'package:flutter_project/security/encryption_helper.dart';
 
 class JournalScreen extends StatefulWidget {
   final String userId;
+  final String? userEmail;
 
-  JournalScreen({required this.userId});
+  JournalScreen({required this.userId, this.userEmail});
 
   @override
   _JournalScreenState createState() => _JournalScreenState();
@@ -17,19 +20,27 @@ class _JournalScreenState extends State<JournalScreen> {
   final entry = journalController.text.trim();
 
   if (entry.isNotEmpty) {
+    final encryptedEntry = EncryptionHelper.encryptText(entry);
     await FirebaseFirestore.instance
         .collection('users')
         .doc(widget.userId)
         .collection('journals')
         .add({
-      'text': entry,
+      'text': encryptedEntry,
       'createdAt': Timestamp.now(),
     });
-
+    
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Journal entry saved!')),
     );
 
+  Navigator.pushAndRemoveUntil(
+  context,
+  MaterialPageRoute(
+    builder: (context) => WelcomeScreen(userEmail: widget.userEmail ?? ''),
+  ),
+  (route) => false, // removes all previous routes
+);
     journalController.clear();
   }
 }

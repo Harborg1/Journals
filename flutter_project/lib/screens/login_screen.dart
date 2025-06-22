@@ -9,18 +9,41 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final emailController = TextEditingController();
-  final passwordController = TextEditingController();
+  late TextEditingController emailController;
+  late TextEditingController passwordController;
   String errorMessage = '';
+
+  @override
+  void initState() {
+    super.initState();
+    emailController = TextEditingController();
+    passwordController = TextEditingController();
+
+    // Clear text fields to ensure they don't retain values
+    emailController.clear();
+    passwordController.clear();
+  }
+
+  @override
+  void dispose() {
+    emailController.dispose();
+    passwordController.dispose();
+    super.dispose();
+  }
 
   Future<void> signIn() async {
     try {
       UserCredential userCredential = await FirebaseAuth.instance
           .signInWithEmailAndPassword(
-              email: emailController.text.trim(),
-              password: passwordController.text.trim());
+        email: emailController.text.trim(),
+        password: passwordController.text.trim(),
+      );
 
-      Navigator.push(
+      // Clear the fields after successful login
+      emailController.clear();
+      passwordController.clear();
+
+      Navigator.pushReplacement(
         context,
         MaterialPageRoute(
           builder: (context) =>
@@ -67,8 +90,10 @@ class _LoginScreenState extends State<LoginScreen> {
             if (errorMessage.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.only(top: 20),
-                child: Text(errorMessage,
-                    style: TextStyle(color: Colors.red)),
+                child: Text(
+                  errorMessage,
+                  style: TextStyle(color: Colors.red),
+                ),
               )
           ],
         ),
