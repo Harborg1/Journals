@@ -5,7 +5,7 @@ import 'package:flutter_project/security/encryption_helper.dart';
 class JournalEntriesScreen extends StatefulWidget {
   final String userId;
 
-  JournalEntriesScreen({required this.userId});
+  const JournalEntriesScreen({super.key, required this.userId});
 
   @override
   State<JournalEntriesScreen> createState() => _JournalEntriesScreenState();

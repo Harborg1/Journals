@@ -7,7 +7,7 @@ class JournalScreen extends StatefulWidget {
   final String userId;
   final String? userEmail;
 
-  JournalScreen({required this.userId, this.userEmail});
+  const JournalScreen({super.key, required this.userId, this.userEmail});
 
   @override
   _JournalScreenState createState() => _JournalScreenState();

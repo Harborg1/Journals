@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_project/security/encryption_helper.dart';
+import 'package:flutter_project/security/security_manager.dart';
 import 'register_screen.dart';
 import 'welcome_screen.dart';
 
 class LoginScreen extends StatefulWidget {
+  const LoginScreen({super.key});
+
   @override
   _LoginScreenState createState() => _LoginScreenState();
 }
@@ -32,12 +36,19 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> signIn() async {
+    final passwordText =  passwordController.text.trim();
     try {
       UserCredential userCredential = await FirebaseAuth.instance
           .signInWithEmailAndPassword(
         email: emailController.text.trim(),
-        password: passwordController.text.trim(),
+        password: passwordText,
       );
+
+      
+    final salt = await fetchSaltFromSupabase(userCredential.user!.uid);
+    final encryptionKey = await deriveKeyFromPasswordAndSalt(passwordText, salt);
+
+    SessionKeyManager().setKey(encryptionKey);
 
       // Clear the fields after successful login
       emailController.clear();

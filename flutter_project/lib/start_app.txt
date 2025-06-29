@@ -1,11 +1,10 @@
+# Starting the android emulator
 Press CTRL+SHIFT+P
 Start the android emulator (cold boot)
 Press F5
 
 
-#Setting up the app as a web server (Localhost)
- How to Set Up Firebase with Flutter (Web + Android)
-
+#Setting up the app as a web server
 1. Install Firebase CLI  
    Run the following command:
    npm install -g firebase-tools
@@ -24,8 +23,7 @@ Press F5
 4. Configure Firebase for your Flutter app  
    In your Flutter project directory, run:
    flutterfire configure
-
-   - Select your Firebase project
+der er ikke 
    - Select platforms (web, android, etc.)
    - This generates a file: lib/firebase_options.dart
 
@@ -38,6 +36,7 @@ Press F5
      options: DefaultFirebaseOptions.currentPlatform,
    );
 
-6. Run the app in Chrome (web)  
-   Use:
-   flutter run -d chrome
+6. Run the command flutter build web
+
+7. Run firebase deploy to deploy the website. A URL link for the website will then be given to you 
+   so you can access your web-application.

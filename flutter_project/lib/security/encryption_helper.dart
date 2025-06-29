@@ -1,17 +1,34 @@
+import 'dart:typed_data';
+
+import 'package:cryptography/cryptography.dart';
 import 'package:encrypt/encrypt.dart' as encrypt;
+import 'dart:convert';
+import 'dart:math';
+import '../main.dart'; // Adjust path if needed
+import 'security_manager.dart';
 
 class EncryptionHelper {
-  static final _key = encrypt.Key.fromUtf8('my32lengthsupersecretnooneknows1'); // 32 chars
-
+  
   static String encryptText(String plainText) {
+    final keyBytes = SessionKeyManager().key;
+    if (keyBytes == null) {
+      throw Exception('Encryption key is not set in SessionKeyManager.');
+    }
+
+    final key = encrypt.Key(Uint8List.fromList(keyBytes));
     final iv = encrypt.IV.fromSecureRandom(16);
-    final encrypter = encrypt.Encrypter(encrypt.AES(_key));
+    final encrypter = encrypt.Encrypter(encrypt.AES(key));
 
     final encrypted = encrypter.encrypt(plainText, iv: iv);
-    return '${iv.base64}:${encrypted.base64}'; 
+    return '${iv.base64}:${encrypted.base64}';
   }
 
   static String decryptText(String encryptedText) {
+    final keyBytes = SessionKeyManager().key;
+    if (keyBytes == null) {
+      throw Exception('Encryption key is not set in SessionKeyManager.');
+    }
+
     final parts = encryptedText.split(':');
     if (parts.length != 2) {
       throw ArgumentError('Invalid encrypted format. Expected "iv:encryptedText".');
@@ -20,7 +37,48 @@ class EncryptionHelper {
     final iv = encrypt.IV.fromBase64(parts[0]);
     final encrypted = encrypt.Encrypted.fromBase64(parts[1]);
 
-    final encrypter = encrypt.Encrypter(encrypt.AES(_key));
-    return encrypter.decrypt(encrypted, iv: iv); 
+    final key = encrypt.Key(Uint8List.fromList(keyBytes));
+    final encrypter = encrypt.Encrypter(encrypt.AES(key));
+
+    return encrypter.decrypt(encrypted, iv: iv);
   }
+}
+
+String generateSalt() {
+  final rand = Random.secure();
+  final saltBytes = List<int>.generate(16, (_) => rand.nextInt(256)); // 128-bit salt
+  final salt = base64UrlEncode(saltBytes);
+
+ return salt;
+}
+
+Future<List<int>> deriveKeyFromPasswordAndSalt(String password, String base64Salt) async {
+  final saltBytes = base64Url.decode(base64Salt);
+
+  final pbkdf2 = Pbkdf2(
+    macAlgorithm: Hmac.sha256(),
+    iterations: 100000,
+    bits: 256,
+  );
+
+  final secretKey = await pbkdf2.deriveKeyFromPassword(
+    password: password,
+    nonce: saltBytes,
+  );
+
+  return await secretKey.extractBytes(); // 256-bit AES key
+}
+
+Future<String> fetchSaltFromSupabase(String userId) async {
+  final response = await supabase
+      .from('firebase_users')
+      .select('salt')
+      .eq('user_id', userId)
+      .maybeSingle();
+
+  if (response == null || response['salt'] == null) {
+    throw Exception('Salt not found for user: $userId');
+  }
+
+  return response['salt'] as String;
 }

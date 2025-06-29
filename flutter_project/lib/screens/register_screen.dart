@@ -1,9 +1,14 @@
+import '../main.dart'; // Adjust path if needed
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'welcome_screen.dart';
+import '../security/encryption_helper.dart';
+import '../security/security_manager.dart';
 
 class RegisterScreen extends StatefulWidget {
+  const RegisterScreen({super.key});
+
   @override
   _RegisterScreenState createState() => _RegisterScreenState();
 }
@@ -14,34 +19,65 @@ class _RegisterScreenState extends State<RegisterScreen> {
   String errorMessage = '';
 
   Future<void> register() async {
-    try {
-      UserCredential userCredential = await FirebaseAuth.instance
-          .createUserWithEmailAndPassword(
-        email: emailController.text.trim(),
-        password: passwordController.text.trim(),
-      );
+    
+    final passwordText = passwordController.text.trim();
+  try {
+    // 1. Sign up with Firebase Auth
+    UserCredential userCredential = await FirebaseAuth.instance
+        .createUserWithEmailAndPassword(
+      email: emailController.text.trim(),
+      password: passwordText,
+    );
 
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(userCredential.user!.uid)
-          .set({
-        'email': emailController.text.trim(),
-        'createdAt': Timestamp.now(),
-      });
+    final email = userCredential.user?.email;
+    if (email == null) throw Exception('User email is null');
 
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) =>
-              WelcomeScreen(userEmail: userCredential.user!.email!),
-        ),
-      );
-    } catch (e) {
-      setState(() {
-        errorMessage = e.toString();
-      });
-    }
+    // 2. Save to Firebase Firestore
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(userCredential.user!.uid)
+        .set({
+      'email': email,
+      'createdAt': Timestamp.now(),
+    });
+
+    // 3. Generate salt
+    final salt = generateSalt();
+   
+    // 4. Insert into Supabase
+   try {
+    final response = await supabase.from('firebase_users').insert({
+    'user_id': userCredential.user!.uid,
+    'salt': salt,
+    'created_at': DateTime.now().toIso8601String(),
+  }).select();
+
+    // Optionally log/print the result
+    print("Insert result: $response");
+
+  } catch (e) {
+    // This is where you handle Supabase errors now
+    throw Exception('Supabase insert failed: $e');
   }
+
+  final encryptionKey = await deriveKeyFromPasswordAndSalt(passwordText, salt);
+
+  SessionKeyManager().setKey(encryptionKey);
+
+    // 5. Navigate to Welcome screen
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => WelcomeScreen(userEmail: email),
+      ),
+    );
+  } catch (e) {
+    setState(() {
+      errorMessage = e.toString();
+    });
+  }
+}
+
 
   @override
   Widget build(BuildContext context) {

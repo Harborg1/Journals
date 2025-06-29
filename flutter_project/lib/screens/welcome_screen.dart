@@ -5,7 +5,7 @@ import 'journal_screen.dart';
 import 'login_screen.dart';
 class WelcomeScreen extends StatelessWidget {
   final String userEmail;
-  WelcomeScreen({required this.userEmail});
+  const WelcomeScreen({super.key, required this.userEmail});
   @override
   Widget build(BuildContext context) {
           return Scaffold(
