@@ -44,10 +44,11 @@ class _LoginScreenState extends State<LoginScreen> {
         password: passwordText,
       );
 
-      
+    // Derive the encryption key
     final salt = await fetchSaltFromSupabase(userCredential.user!.uid);
     final encryptionKey = await deriveKeyFromPasswordAndSalt(passwordText, salt);
 
+    // Set the encryption key locally for the current session.
     SessionKeyManager().setKey(encryptionKey);
 
       // Clear the fields after successful login
