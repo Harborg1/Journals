@@ -100,10 +100,13 @@ class _JournalEntriesScreenState extends State<JournalEntriesScreen> {
                               child: Text(decryptedText)
                             ),
                             actions: [
-                              TextButton(
-                                onPressed: () => Navigator.pop(context),
-                                child: Icon(Icons.close)
-                              )
+                               Tooltip(
+                                message: 'Close',
+                                child: TextButton(
+                                  onPressed: () => Navigator.pop(context),
+                                  child: Icon(Icons.close),
+                                ),
+                              ),
                             ],
                             ),
                         );
@@ -127,11 +130,17 @@ class _JournalEntriesScreenState extends State<JournalEntriesScreen> {
                               ),
                             ),
                             actions: [
-                              TextButton(
-                                onPressed: () => Navigator.pop(context),
-                                child: Icon(Icons.close),
+                             Tooltip(
+                                message: 'Close',
+                                child: TextButton(
+                                  onPressed: () => Navigator.pop(context),
+                                  child: Icon(Icons.close),
+                                ),
                               ),
-                              ElevatedButton(
+                            
+                            Tooltip(
+                              message: 'Update entry',
+                              child: ElevatedButton(
                                 onPressed: () async {
                                   final newText = controller.text.trim();
                                   if (newText.isNotEmpty) {
@@ -142,10 +151,12 @@ class _JournalEntriesScreenState extends State<JournalEntriesScreen> {
                                     scaffoldMessenger.showSnackBar(
                                       SnackBar(content: Text('Entry updated')),
                                     );
+                                    
                                   }
                                 },
                                 child: Icon(Icons.save),
                               ),
+                              )
                             ],
                           ),
                         );

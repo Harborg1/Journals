@@ -3,72 +3,105 @@ import 'package:flutter/material.dart';
 import 'package:flutter_project/screens/journal_entries_screen.dart';
 import 'journal_screen.dart';
 import 'login_screen.dart';
+
 class WelcomeScreen extends StatelessWidget {
   final String userEmail;
   const WelcomeScreen({super.key, required this.userEmail});
+
   @override
   Widget build(BuildContext context) {
-          return Scaffold(
-            appBar: AppBar(
-        title: Text('Welcome'),
+    return Scaffold(
+      appBar: AppBar(
         actions: [
           IconButton(
-            icon: Icon(Icons.logout),
+            icon: const Icon(Icons.logout),
             onPressed: () async {
               await FirebaseAuth.instance.signOut();
-                Navigator.pushReplacement(
-                context, MaterialPageRoute(builder: (context) => LoginScreen()),
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => const LoginScreen()),
               );
             },
-          )
+          ),
         ],
       ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text('Hello $userEmail!',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-            SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () {
-                final userId = FirebaseAuth.instance.currentUser?.uid;
-                final userEmail = FirebaseAuth.instance.currentUser?.email;
-                if (userId != null) {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => JournalScreen(userId: userId, userEmail: userEmail),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          bool isWide = constraints.maxWidth > 600;
+
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 500),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment:
+                      isWide ? CrossAxisAlignment.start : CrossAxisAlignment.center,
+                  children: [
+                    Text(
+                      'Hello $userEmail!',
+                      textAlign: isWide ? TextAlign.left : TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                  );
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('User not logged in')),
-                  );
-                }
-              },
-              child: Text('Write Journal'), 
+                    const SizedBox(height: 32),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          final userId = FirebaseAuth.instance.currentUser?.uid;
+                          final email = FirebaseAuth.instance.currentUser?.email;
+                          if (userId != null) {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => JournalScreen(
+                                  userId: userId,
+                                  userEmail: email,
+                                ),
+                              ),
+                            );
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('User not logged in')),
+                            );
+                          }
+                        },
+                        child: const Text('Write Journal'),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          final userId = FirebaseAuth.instance.currentUser?.uid;
+                          if (userId != null) {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    JournalEntriesScreen(userId: userId),
+                              ),
+                            );
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('User not logged in')),
+                            );
+                          }
+                        },
+                        child: const Text('View Past Entries'),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
-            ElevatedButton(
-            onPressed: () {
-              final userId = FirebaseAuth.instance.currentUser?.uid;
-              if (userId != null) {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => JournalEntriesScreen(userId: userId),
-                  ),
-                );
-              } else {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('User not logged in')),
-                );
-              }
-            },
-            child: Text('View Past Entries'),
-          ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
