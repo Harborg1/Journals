@@ -85,58 +85,112 @@ class _JournalEntriesScreenState extends State<JournalEntriesScreen> {
                       ? '${decryptedText.substring(0, 50)}...'
                       : decryptedText,
                 ),
-                trailing: IconButton(
-                  icon: Icon(Icons.delete),
-                  color: Colors.red,
-                  onPressed: () async {
-                    final confirm = await showDialog<bool>(
-                      context: context,
-                      builder: (_) => AlertDialog(
-                        title: Text('Delete Entry'),
-                        content: Text(
-                            'Are you sure you want to delete this journal entry?'),
-                        actions: [
-                          TextButton(
-                            onPressed: () =>
-                                Navigator.pop(context, false),
-                            child: Text('Cancel'),
-                          ),
-                          TextButton(
-                            onPressed: () =>
-                                Navigator.pop(context, true),
-                            child: Text(
-                              'Delete',
-                              style: TextStyle(color: Colors.red),
+                trailing: Wrap(
+                  spacing: 8.0,
+                  children: [
+                    IconButton(
+                      icon: Icon(Icons.visibility),
+                      tooltip: 'View entry',
+                      onPressed: () {
+                        showDialog(
+                          context: context,
+                          builder: (_) => AlertDialog(
+                            title: Text('Entry - $formattedDate'),
+                            content: SingleChildScrollView(
+                              child: Text(decryptedText)
                             ),
-                          ),
-                        ],
-                      ),
-                    );
-
-                    if (confirm == true) {
-                      await docRef.delete();
-                      _refreshEntries(); // trigger reload
-                      scaffoldMessenger.showSnackBar(
-                        SnackBar(content: Text('Entry deleted')),
-                      );
-                    }
-                  },
-                ),
-                onTap: () {
-                  showDialog(
-                    context: context,
-                    builder: (_) => AlertDialog(
-                      title: Text(formattedDate),
-                      content: Text(decryptedText),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(context),
-                          child: Text('Close'),
-                        )
-                      ],
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context),
+                                child: Icon(Icons.close)
+                              )
+                            ],
+                            ),
+                        );
+                      },
                     ),
-                  );
-                },
+                    IconButton(
+                      icon: Icon(Icons.edit),
+                      tooltip: 'Edit entry',
+                      onPressed: () {
+                        final controller = TextEditingController(text: decryptedText);
+                        showDialog(
+                          context: context,
+                          builder: (_) => AlertDialog(
+                            title: Text('Edit Entry - $formattedDate'),
+                            content: TextField(
+                              controller: controller,
+                              maxLines: null,
+                              decoration: InputDecoration(
+                                border: OutlineInputBorder(),
+                                labelText: 'Journal Text',
+                              ),
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context),
+                                child: Icon(Icons.close),
+                              ),
+                              ElevatedButton(
+                                onPressed: () async {
+                                  final newText = controller.text.trim();
+                                  if (newText.isNotEmpty) {
+                                    final encrypted = EncryptionHelper.encryptText(newText);
+                                    await docRef.update({'text': encrypted});
+                                    Navigator.pop(context);
+                                    _refreshEntries();
+                                    scaffoldMessenger.showSnackBar(
+                                      SnackBar(content: Text('Entry updated')),
+                                    );
+                                  }
+                                },
+                                child: Icon(Icons.save),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                    IconButton(
+                      icon: Icon(Icons.delete),
+                      color: Colors.red,
+                      tooltip: 'Delete entry',
+                      onPressed: () async {
+                        final confirm = await showDialog<bool>(
+                          context: context,
+                          builder: (_) => AlertDialog(
+                            title: Text('Delete Entry'),
+                            content: Text(
+                                'Are you sure you want to delete this journal entry?'),
+                            actions: [
+                              TextButton(
+                                onPressed: () =>
+                                    Navigator.pop(context, false),
+                                child: Text('Cancel'),
+                              ),
+                              TextButton(
+                                onPressed: () =>
+                                    Navigator.pop(context, true),
+                                child: Text(
+                                  'Delete',
+                                  style: TextStyle(color: Colors.red),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+
+                        if (confirm == true) {
+                          await docRef.delete();
+                          _refreshEntries();
+                          scaffoldMessenger.showSnackBar(
+                            SnackBar(content: Text('Entry deleted')),
+                          );
+                        }
+                      },
+                    ),
+                  ],
+                ),
               );
             },
           );
