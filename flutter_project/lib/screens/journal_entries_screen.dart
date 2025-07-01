@@ -164,7 +164,6 @@ class _JournalEntriesScreenState extends State<JournalEntriesScreen> {
                     ),
                     IconButton(
                       icon: Icon(Icons.delete),
-                      color: Colors.red,
                       tooltip: 'Delete entry',
                       onPressed: () async {
                         final confirm = await showDialog<bool>(

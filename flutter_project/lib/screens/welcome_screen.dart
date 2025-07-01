@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_project/screens/journal_entries_screen.dart';
+import 'package:flutter_project/screens/settings_screen.dart';
 import 'journal_screen.dart';
 import 'login_screen.dart';
 
@@ -13,17 +14,35 @@ class WelcomeScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () async {
-              await FirebaseAuth.instance.signOut();
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => const LoginScreen()),
-              );
-            },
-          ),
-        ],
+  PopupMenuButton<String>(
+    icon: const Icon(Icons.settings),
+    onSelected: (String choice) async {
+      if (choice == 'logout') {
+        await FirebaseAuth.instance.signOut();
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const LoginScreen()),
+        );
+      } else if (choice == 'preferences') {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const Settings()),
+        );
+      }
+    },
+    itemBuilder: (BuildContext context) => [
+      const PopupMenuItem<String>(
+        value: 'preferences',
+        child: Text('Settings'),
+      ),
+      const PopupMenuItem<String>(
+        value: 'logout',
+        child: Text('Log Out'),
+      ),
+    ],
+  ),
+],
+
       ),
       body: LayoutBuilder(
         builder: (context, constraints) {
