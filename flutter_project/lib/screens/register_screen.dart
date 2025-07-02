@@ -40,7 +40,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         .set({
       'email': email,
       'createdAt': Timestamp.now(),
-      'salt:':salt
+      'salt':salt
     });
 
 
