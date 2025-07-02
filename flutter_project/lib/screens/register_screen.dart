@@ -1,4 +1,4 @@
-import '../main.dart'; // Adjust path if needed
+
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -30,6 +30,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
 
     final email = userCredential.user?.email;
+    final salt = generateSalt();
     if (email == null) throw Exception('User email is null');
 
     // 2. Save to Firebase Firestore
@@ -39,26 +40,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
         .set({
       'email': email,
       'createdAt': Timestamp.now(),
+      'salt:':salt
     });
 
-    // 3. Generate salt
-    final salt = generateSalt();
-   
-    // 4. Insert into Supabase
-   try {
-    final response = await supabase.from('firebase_users').insert({
-    'user_id': userCredential.user!.uid,
-    'salt': salt,
-    'created_at': DateTime.now().toIso8601String(),
-  }).select();
-
-    // Optionally log/print the result
-    print("Insert result: $response");
-
-  } catch (e) {
-    // This is where you handle Supabase errors now
-    throw Exception('Supabase insert failed: $e');
-  }
 
   final encryptionKey = await deriveKeyFromPasswordAndSalt(passwordText, salt);
 

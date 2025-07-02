@@ -45,7 +45,7 @@ class _LoginScreenState extends State<LoginScreen> {
       );
 
     // Derive the encryption key
-    final salt = await fetchSaltFromSupabase(userCredential.user!.uid);
+    final salt = await fetchSaltFromFirestore(userCredential.user!.uid);
     final encryptionKey = await deriveKeyFromPasswordAndSalt(passwordText, salt);
 
     // Set the encryption key locally for the current session.

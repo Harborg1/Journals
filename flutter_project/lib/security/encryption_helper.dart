@@ -4,8 +4,8 @@ import 'package:cryptography/cryptography.dart';
 import 'package:encrypt/encrypt.dart' as encrypt;
 import 'dart:convert';
 import 'dart:math';
-import '../main.dart'; // Adjust path if needed
 import 'security_manager.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class EncryptionHelper {
   
@@ -69,16 +69,21 @@ Future<List<int>> deriveKeyFromPasswordAndSalt(String password, String base64Sal
   return await secretKey.extractBytes(); // 256-bit AES key
 }
 
-Future<String> fetchSaltFromSupabase(String userId) async {
-  final response = await supabase
-      .from('firebase_users')
-      .select('salt')
-      .eq('user_id', userId)
-      .maybeSingle();
+Future<String> fetchSaltFromFirestore(String userId) async {
+  final docSnapshot = await FirebaseFirestore.instance
+      .collection('users')
+      .doc(userId)
+      .get();
 
-  if (response == null || response['salt'] == null) {
+  if (!docSnapshot.exists) {
+    throw Exception('User not found: $userId');
+  }
+
+  final data = docSnapshot.data();
+  if (data == null || !data.containsKey('salt')) {
     throw Exception('Salt not found for user: $userId');
   }
 
-  return response['salt'] as String;
+  return data['salt'] as String;
 }
+
