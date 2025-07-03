@@ -31,8 +31,6 @@ class EncryptionHelper {
       throw Exception('Encryption key is not set in SessionKeyManager.');
     }
 
-    print("🔐 Key used for decryption: ${keyBytes}");
-
     final parts = encryptedText.split(':');
     if (parts.length != 2) {
       throw ArgumentError('Invalid encrypted format. Expected \"iv:encryptedText\".');
@@ -47,8 +45,6 @@ class EncryptionHelper {
     return encrypter.decrypt(encrypted, iv: iv);
   }
 }
-
-// ✅ Properly defined outside the class
 
 Uint8List generateMasterKey() {
   final rand = Random.secure();
