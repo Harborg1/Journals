@@ -6,8 +6,7 @@ A journaling web app built with Flutter and Dart. Users can register, log in, an
 
 - **Secure Registration & Login** using Firebase Authentication
 - **Encryption by Default**: Entries are encrypted with a derived key from the user’s password and salt.
-- **Firebase Firestore Integration** for real-time data syncing
-- **Supabase integration** for storing the salt and user ID to decrypt journal posts.
+- **Firebase Firestore Integration** for real-time data. 
 
 ### Prerequisites
 
