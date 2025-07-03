@@ -20,20 +20,22 @@ class _JournalEntriesScreenState extends State<JournalEntriesScreen> {
     _decryptedEntries = _loadDecryptedEntries();
   }
 
-  Future<List<Map<String, dynamic>>> _loadDecryptedEntries() async {
-    final snapshot = await FirebaseFirestore.instance
-        .collection('users')
-        .doc(widget.userId)
-        .collection('journals')
-        .orderBy('createdAt', descending: true)
-        .get();
+ Future<List<Map<String, dynamic>>> _loadDecryptedEntries() async {
+  final snapshot = await FirebaseFirestore.instance
+      .collection('users')
+      .doc(widget.userId)
+      .collection('journals')
+      .orderBy('createdAt', descending: true)
+      .get();
 
-    final decrypted = <Map<String, dynamic>>[];
+  final decrypted = <Map<String, dynamic>>[];
 
-    for (var doc in snapshot.docs) {
+  for (var doc in snapshot.docs) {
+    try {
       final encryptedText = doc['text'] as String;
       final timestamp = doc['createdAt'] as Timestamp;
       final date = timestamp.toDate();
+
       final decryptedText = EncryptionHelper.decryptText(encryptedText);
 
       decrypted.add({
@@ -41,9 +43,15 @@ class _JournalEntriesScreenState extends State<JournalEntriesScreen> {
         'text': decryptedText,
         'date': date,
       });
+    } catch (e) {
+      print("Failed to decrypt entry ${doc.id}: $e");
+      // Optionally: add a placeholder, or skip silently
     }
-    return decrypted;
   }
+
+  return decrypted;
+}
+
 
   void _refreshEntries() {
     setState(() {

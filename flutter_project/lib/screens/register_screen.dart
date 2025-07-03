@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -19,48 +18,54 @@ class _RegisterScreenState extends State<RegisterScreen> {
   String errorMessage = '';
 
   Future<void> register() async {
-    
     final passwordText = passwordController.text.trim();
-  try {
-    // 1. Sign up with Firebase Auth
-    UserCredential userCredential = await FirebaseAuth.instance
-        .createUserWithEmailAndPassword(
-      email: emailController.text.trim(),
-      password: passwordText,
-    );
 
-    final email = userCredential.user?.email;
-    final salt = generateSalt();
-    if (email == null) throw Exception('User email is null');
+    try {
+      // 1. Sign up with Firebase Auth
+      UserCredential userCredential = await FirebaseAuth.instance
+          .createUserWithEmailAndPassword(
+        email: emailController.text.trim(),
+        password: passwordText,
+      );
 
-    // 2. Save to Firebase Firestore
-    await FirebaseFirestore.instance
-        .collection('users')
-        .doc(userCredential.user!.uid)
-        .set({
-      'email': email,
-      'createdAt': Timestamp.now(),
-      'salt':salt
-    });
+      final uid = userCredential.user?.uid;
+      final email = userCredential.user?.email;
+      if (uid == null || email == null) throw Exception('User creation failed');
 
+      // 2. Generate salt and master key
+      final salt = generateSalt();
+      final masterKey = generateMasterKey();
 
-  final encryptionKey = await deriveKeyFromPasswordAndSalt(passwordText, salt);
+      // 3. Derive password-based key
+      final derivedKey = await deriveKeyFromPasswordAndSalt(passwordText, salt);
 
-  SessionKeyManager().setKey(encryptionKey);
+      // 4. Encrypt master key using password-derived key
+      final encryptedMasterKey = encryptMasterKey(masterKey, derivedKey);
 
-    // 5. Navigate to Welcome screen
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (context) => WelcomeScreen(userEmail: email),
-      ),
-    );
-  } catch (e) {
-    setState(() {
-      errorMessage = e.toString();
-    });
+      // 5. Store encryptedMasterKey and salt in Firestore
+      await FirebaseFirestore.instance.collection('users').doc(uid).set({
+        'email': email,
+        'createdAt': Timestamp.now(),
+        'salt': salt,
+        'encryptedMasterKey': encryptedMasterKey,
+      });
+
+      // 6. Store masterKey in session memory for encrypting entries
+      SessionKeyManager().setKey(masterKey);
+
+      // 7. Navigate to Welcome screen
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => WelcomeScreen(userEmail: email),
+        ),
+      );
+    } catch (e) {
+      setState(() {
+        errorMessage = e.toString();
+      });
+    }
   }
-}
 
   @override
   Widget build(BuildContext context) {
@@ -91,4 +96,4 @@ class _RegisterScreenState extends State<RegisterScreen> {
       ),
     );
   }
-}
+} 

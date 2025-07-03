@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_project/security/encryption_helper.dart';
@@ -36,38 +37,49 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> signIn() async {
-    final passwordText =  passwordController.text.trim();
-    try {
-      UserCredential userCredential = await FirebaseAuth.instance
-          .signInWithEmailAndPassword(
-        email: emailController.text.trim(),
-        password: passwordText,
-      );
+  final passwordText = passwordController.text.trim();
+  try {
+    UserCredential userCredential = await FirebaseAuth.instance
+        .signInWithEmailAndPassword(
+      email: emailController.text.trim(),
+      password: passwordText,
+    );
 
-    // Derive the encryption key
-    final salt = await fetchSaltFromFirestore(userCredential.user!.uid);
-    final encryptionKey = await deriveKeyFromPasswordAndSalt(passwordText, salt);
+    final uid = userCredential.user!.uid;
 
-    // Set the encryption key locally for the current session.
-    SessionKeyManager().setKey(encryptionKey);
+    // 1. Fetch salt and encrypted master key from Firestore
+    final userDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+    final salt = userDoc['salt'] as String;
+    final encryptedMasterKey = userDoc['encryptedMasterKey'] as String;
 
-      // Clear the fields after successful login
-      emailController.clear();
-      passwordController.clear();
+    // 2. Derive password-based key
+    final derivedKey = await deriveKeyFromPasswordAndSalt(passwordText, salt);
 
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) =>
-              WelcomeScreen(userEmail: userCredential.user!.email!),
-        ),
-      );
-    } catch (e) {
-      setState(() {
-        errorMessage = e.toString();
-      });
-    }
+    // 3. Decrypt the master key
+    final masterKey = decryptMasterKey(encryptedMasterKey, derivedKey); // You must implement this function
+
+    // 4. Store master key in session
+    SessionKeyManager().setKey(masterKey);
+
+    print("✅ Master key loaded and set in session");
+
+    // Proceed to welcome screen
+    emailController.clear();
+    passwordController.clear();
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) =>
+            WelcomeScreen(userEmail: userCredential.user!.email!),
+      ),
+    );
+  } catch (e) {
+    setState(() {
+      errorMessage = e.toString();
+    });
   }
+}
+
 
   @override
   Widget build(BuildContext context) {

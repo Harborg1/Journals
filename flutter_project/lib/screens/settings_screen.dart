@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_project/security/encryption_helper.dart';
+import 'package:flutter_project/security/security_manager.dart';
 import 'login_screen.dart';
 
 class Settings extends StatefulWidget {
@@ -73,19 +75,82 @@ class _SettingsState extends State<Settings> {
   }
 
   void _changePassword() {
-    final user = FirebaseAuth.instance.currentUser;
-    final email = user?.email;
-    if (email != null) {
-      FirebaseAuth.instance.sendPasswordResetEmail(email: email);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Password reset email sent.')),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No user is currently signed in.')),
-      );
-    }
+  final user = FirebaseAuth.instance.currentUser;
+
+  if (user == null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('No user is currently signed in.')),
+    );
+    return;
   }
+
+  final TextEditingController newPasswordController = TextEditingController();
+
+  showDialog(
+    context: context,
+    builder: (dialogContext) {
+      return AlertDialog(
+        title: const Text('Change Password'),
+        content: TextField(
+          controller: newPasswordController,
+          obscureText: true,
+          decoration: const InputDecoration(labelText: 'New Password'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              final newPassword = newPasswordController.text.trim();
+              Navigator.pop(dialogContext); // Close the dialog first
+
+              try {
+                await user.updatePassword(newPassword);
+
+                final masterKey = SessionKeyManager().key;
+                if (masterKey == null) {
+                  throw Exception("Master key not found in session");
+                }
+
+                final newSalt = generateSalt();
+                final newDerivedKey = await deriveKeyFromPasswordAndSalt(newPassword, newSalt);
+                final newEncryptedMasterKey = encryptMasterKey(masterKey, newDerivedKey);
+
+                await FirebaseFirestore.instance
+                    .collection('users')
+                    .doc(user.uid)
+                    .update({
+                  'salt': newSalt,
+                  'encryptedMasterKey': newEncryptedMasterKey,
+                });
+                // Defer snackbar to ensure context is valid
+                if (mounted) {
+                  Future.microtask(() {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Password changed and encryption updated.')),
+                    );
+                  });
+                }
+              } catch (e) {
+                if (mounted) {
+                  Future.microtask(() {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Error: $e')),
+                    );
+                  });
+                }
+              }
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      );
+    },
+  );
+}
+
 
   @override
   Widget build(BuildContext context) {
