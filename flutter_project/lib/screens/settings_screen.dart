@@ -4,6 +4,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_project/security/encryption_helper.dart';
 import 'package:flutter_project/security/security_manager.dart';
 import 'login_screen.dart';
+import 'package:provider/provider.dart';
+import 'package:flutter_project/theme/theme_provider.dart';
 
 class Settings extends StatefulWidget {
   const Settings({super.key});
@@ -13,7 +15,6 @@ class Settings extends StatefulWidget {
 }
 
 class _SettingsState extends State<Settings> {
-  bool _darkMode = false;
 
   Future<void> _deleteAccountAndData() async {
     final user = FirebaseAuth.instance.currentUser;
@@ -154,6 +155,7 @@ class _SettingsState extends State<Settings> {
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
     return Scaffold(
       appBar: AppBar(
         title: const Text('Settings'),
@@ -164,14 +166,13 @@ class _SettingsState extends State<Settings> {
       ),
       body: ListView(
         children: [
-          SwitchListTile(
-            title: const Text('Dark Mode'),
-            value: _darkMode,
-            onChanged: (val) {
-              setState(() => _darkMode = val);
-              // TODO: Add actual dark mode persistence with Provider or shared_preferences
-            },
-          ),
+        SwitchListTile(
+          title: const Text('Dark Mode'),
+          value: themeProvider.isDarkMode,
+          onChanged: (val) {
+            themeProvider.toggleTheme(val);
+          },
+        ),
               ListTile(
               title: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,

@@ -48,6 +48,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         'createdAt': Timestamp.now(),
         'salt': salt,
         'encryptedMasterKey': encryptedMasterKey,
+        'isDarkMode':false
       });
 
       // 6. Store masterKey in session memory for encrypting entries

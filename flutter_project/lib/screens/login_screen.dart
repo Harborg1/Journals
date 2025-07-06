@@ -56,12 +56,10 @@ class _LoginScreenState extends State<LoginScreen> {
     final derivedKey = await deriveKeyFromPasswordAndSalt(passwordText, salt);
 
     // 3. Decrypt the master key
-    final masterKey = decryptMasterKey(encryptedMasterKey, derivedKey); // You must implement this function
+    final masterKey = decryptMasterKey(encryptedMasterKey, derivedKey); 
 
     // 4. Store master key in session
     SessionKeyManager().setKey(masterKey);
-
-    print("✅ Master key loaded and set in session");
 
     // Proceed to welcome screen
     emailController.clear();
