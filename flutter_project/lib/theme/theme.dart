@@ -30,4 +30,3 @@ ThemeData darkMode = ThemeData(
     ),
   ),
 );
-

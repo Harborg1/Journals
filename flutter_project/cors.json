@@ -1,0 +1,7 @@
+[
+  {
+    "origin": ["https://journals-5832e.web.app"],
+    "method": ["GET"],
+    "maxAgeSeconds": 3600
+  }
+]
