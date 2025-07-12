@@ -7,14 +7,14 @@ import 'login_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_project/theme/theme_provider.dart';
 
-class Settings extends StatefulWidget {
-  const Settings({super.key});
+class SettingsScreen extends StatefulWidget {
+  const SettingsScreen({super.key});
 
   @override
-  State<Settings> createState() => _SettingsState();
+  State<SettingsScreen> createState() => _SettingsScreenState();
 }
 
-class _SettingsState extends State<Settings> {
+class _SettingsScreenState extends State<SettingsScreen> {
 
   Future<void> _deleteAccountAndData() async {
     final user = FirebaseAuth.instance.currentUser;
@@ -158,7 +158,7 @@ class _SettingsState extends State<Settings> {
     final themeProvider = Provider.of<ThemeProvider>(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Settings'),
+        title: const Text('Settings Screen'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),

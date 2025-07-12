@@ -77,13 +77,18 @@ final PageController _pageController = PageController(viewportFraction: 0.98);
                   return Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 4),
                     child: ClipRRect(
-                      borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(10),
+                    child: InteractiveViewer(
+                      panEnabled: true,
+                      minScale: 0.5,
+                      maxScale: 4,
                       child: Image.network(
                         imageUrls[i],
                         fit: BoxFit.contain,
                         alignment: Alignment.center,
                         errorBuilder: (context, error, stackTrace) =>
                             Center(child: Text('Image failed')),
+                       ),
                       ),
                     ),
                   );
@@ -161,8 +166,13 @@ final PageController _pageController = PageController(viewportFraction: 0.98);
                                 ? Icons.expand_less
                                 : Icons.image_outlined,
                           ),
-                          label: Text(
-                              isImageVisible ? 'Hide Images' : 'Show Images'),
+                        label: Text(
+                          imageUrls.length > 1
+                              ? (isImageVisible ? 'Hide Images' : 'Show Images')
+                              : imageUrls.length == 1
+                                  ? (isImageVisible ? 'Hide Image' : 'Show Image')
+                                  : 'Show Image',
+                        ),
                           onPressed: () {
                             setState(() {
                               if (isImageVisible) {
@@ -173,7 +183,8 @@ final PageController _pageController = PageController(viewportFraction: 0.98);
                             });
                           },
                         ),
-                        if (isImageVisible) _buildImageSlideshow(imageUrls),
+                        if (isImageVisible && imageUrls.length>1) _buildImageSlideshow(imageUrls)
+                        else if (isImageVisible && imageUrls.length==1) _buildImageSlideshow(imageUrls,showDots: false)
                       ],
                       Row(
                         mainAxisAlignment: MainAxisAlignment.end,
@@ -201,8 +212,9 @@ final PageController _pageController = PageController(viewportFraction: 0.98);
                                       if (imageUrls.isNotEmpty)
                                         Padding(
                                           padding: const EdgeInsets.only(top: 12),
-                                          child: _buildImageSlideshow(imageUrls,
-                                              showDots: true, controller: dialogController),
+                                          child: imageUrls.length > 1
+                                              ? _buildImageSlideshow(imageUrls, showDots: true, controller: dialogController)
+                                              : _buildImageSlideshow(imageUrls, showDots: false),
                                         ),
                                       Align(
                                         alignment: Alignment.centerRight,

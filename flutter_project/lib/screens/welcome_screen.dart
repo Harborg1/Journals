@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart' as lottie;
@@ -9,7 +10,8 @@ import 'login_screen.dart';
 
 class WelcomeScreen extends StatefulWidget {
   final String userEmail;
-  const WelcomeScreen({super.key, required this.userEmail});
+  final String username;
+  const WelcomeScreen({super.key, required this.userEmail,required this.username});
 
   @override
   State<WelcomeScreen> createState() => _WelcomeScreenState();
@@ -52,7 +54,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
               } else if (choice == 'preferences') {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const Settings()),
+                  MaterialPageRoute(builder: (context) => const SettingsScreen()),
                 );
               }
             },
@@ -84,7 +86,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                       isWide ? CrossAxisAlignment.start : CrossAxisAlignment.center,
                   children: [
                     Text(
-                      'Hello ${widget.userEmail}!',
+                      'Hello ${widget.username}!',
                       textAlign: isWide ? TextAlign.left : TextAlign.center,
                       style: const TextStyle(
                         fontSize: 28,
@@ -100,31 +102,43 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                         child: _buildTreeAnimation(),
                       ),
                     ),
-
                      
                     const SizedBox(height: 16),
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
-                        onPressed: () {
-                          final userId = FirebaseAuth.instance.currentUser?.uid;
-                          final email = FirebaseAuth.instance.currentUser?.email;
-                          if (userId != null) {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => JournalScreen(
-                                  userId: userId,
-                                  userEmail: email,
-                                ),
+                        onPressed: () async {
+                        final user = FirebaseAuth.instance.currentUser;
+                        if (user == null) return;
+
+                        final uid = user.uid;
+                        final email = user.email;
+
+                        try {
+                          final doc = await FirebaseFirestore.instance
+                              .collection('users')
+                              .doc(uid)
+                              .get();
+
+                          final username = doc['username'] as String;
+
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => JournalScreen(
+                                userId: uid,
+                                userEmail: email,
+                                userName: username,
                               ),
-                            );
-                          } else {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('User not logged in')),
-                            );
-                          }
-                        },
+                            ),
+                          );
+                        } catch (e) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Failed to load user data')),
+                          );
+                        }
+                      },
+
                         child: const Text('Write Journal'),
                       ),
                     ),
@@ -177,7 +191,6 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   } catch (e) {
     debugPrint('Lottie load error: $e');
     return const Text('Animation failed to load');
+    }
   }
-}
-
 }

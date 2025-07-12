@@ -13,52 +13,77 @@ class RegisterScreen extends StatefulWidget {
 }
 
 class _RegisterScreenState extends State<RegisterScreen> {
+  final usernameController = TextEditingController();
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
   String errorMessage = '';
 
   Future<void> register() async {
+    final usernameText = usernameController.text.trim();
+    final emailText = emailController.text.trim();
     final passwordText = passwordController.text.trim();
 
+    if (usernameText.isEmpty || emailText.isEmpty || passwordText.isEmpty) {
+      setState(() => errorMessage = 'All fields are required');
+      return;
+    }
+
     try {
-      // 1. Sign up with Firebase Auth
+      // 1. Check if username already exists
+      final existingUsername = await FirebaseFirestore.instance
+          .collection('usernames')
+          .doc(usernameText)
+          .get();
+
+      if (existingUsername.exists) {
+        setState(() => errorMessage = 'Username already taken');
+        return;
+      }
+
+      // 2. Create user with Firebase Auth
       UserCredential userCredential = await FirebaseAuth.instance
           .createUserWithEmailAndPassword(
-        email: emailController.text.trim(),
+        email: emailText,
         password: passwordText,
       );
 
       final uid = userCredential.user?.uid;
-      final email = userCredential.user?.email;
-      if (uid == null || email == null) throw Exception('User creation failed');
+      if (uid == null) throw Exception('User creation failed');
 
-      // 2. Generate salt and master key
+      // 3. Generate salt and master key
       final salt = generateSalt();
       final masterKey = generateMasterKey();
 
-      // 3. Derive password-based key
+      // 4. Derive password-based key
       final derivedKey = await deriveKeyFromPasswordAndSalt(passwordText, salt);
 
-      // 4. Encrypt master key using password-derived key
+      // 5. Encrypt master key
       final encryptedMasterKey = encryptMasterKey(masterKey, derivedKey);
 
-      // 5. Store encryptedMasterKey and salt in Firestore
+      // 6. Store user data in Firestore
       await FirebaseFirestore.instance.collection('users').doc(uid).set({
-        'email': email,
+        'email': emailText,
+        'username': usernameText,
         'createdAt': Timestamp.now(),
         'salt': salt,
         'encryptedMasterKey': encryptedMasterKey,
-        'isDarkMode':false
+        'isDarkMode': false,
       });
 
-      // 6. Store masterKey in session memory for encrypting entries
+      // 7. Store username → email mapping for login lookup
+      await FirebaseFirestore.instance
+          .collection('usernames')
+          .doc(usernameText)
+          .set({'email': emailText});
+
+      // 8. Store master key in session
       SessionKeyManager().setKey(masterKey);
 
-      // 7. Navigate to Welcome screen
+      // 9. Navigate to welcome screen
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (context) => WelcomeScreen(userEmail: email),
+          builder: (context) => WelcomeScreen(userEmail: emailText, username: usernameText,),
         ),
       );
     } catch (e) {
@@ -76,6 +101,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
+            TextField(
+              controller: usernameController,
+              decoration: InputDecoration(labelText: 'Username'),
+            ),
             TextField(
               controller: emailController,
               decoration: InputDecoration(labelText: 'Email'),
@@ -97,4 +126,4 @@ class _RegisterScreenState extends State<RegisterScreen> {
       ),
     );
   }
-} 
+}

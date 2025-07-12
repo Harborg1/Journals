@@ -9,8 +9,9 @@ import 'package:flutter_project/security/encryption_helper.dart';
 class JournalScreen extends StatefulWidget {
   final String userId;
   final String? userEmail;
+  final String? userName;
 
-  const JournalScreen({super.key, required this.userId, this.userEmail});
+  const JournalScreen({super.key, required this.userId, this.userEmail, this.userName});
 
   @override
   _JournalScreenState createState() => _JournalScreenState();
@@ -83,7 +84,7 @@ class _JournalScreenState extends State<JournalScreen> {
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(
-          builder: (context) => WelcomeScreen(userEmail: widget.userEmail ?? ''),
+          builder: (context) => WelcomeScreen(userEmail: widget.userEmail ?? '', username: widget.userName?? ''),
         ),
         (route) => false,
       );

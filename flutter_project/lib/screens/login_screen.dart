@@ -14,70 +14,89 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  late TextEditingController emailController;
+  late TextEditingController identifierController; // username or email
   late TextEditingController passwordController;
   String errorMessage = '';
 
   @override
   void initState() {
     super.initState();
-    emailController = TextEditingController();
+    identifierController = TextEditingController();
     passwordController = TextEditingController();
-
-    // Clear text fields to ensure they don't retain values
-    emailController.clear();
+    identifierController.clear();
     passwordController.clear();
   }
 
   @override
   void dispose() {
-    emailController.dispose();
+    identifierController.dispose();
     passwordController.dispose();
     super.dispose();
   }
 
   Future<void> signIn() async {
-  final passwordText = passwordController.text.trim();
-  try {
-    UserCredential userCredential = await FirebaseAuth.instance
-        .signInWithEmailAndPassword(
-      email: emailController.text.trim(),
-      password: passwordText,
-    );
+    final identifier = identifierController.text.trim();
+    final passwordText = passwordController.text.trim();
 
-    final uid = userCredential.user!.uid;
+    if (identifier.isEmpty || passwordText.isEmpty) {
+      setState(() => errorMessage = 'Both fields are required');
+      return;
+    }
 
-    // 1. Fetch salt and encrypted master key from Firestore
-    final userDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
-    final salt = userDoc['salt'] as String;
-    final encryptedMasterKey = userDoc['encryptedMasterKey'] as String;
+    try {
+      // Determine if input is an email or username
+      final bool isEmail = RegExp(r"^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$").hasMatch(identifier);
+      String emailToUse = identifier;
 
-    // 2. Derive password-based key
-    final derivedKey = await deriveKeyFromPasswordAndSalt(passwordText, salt);
+      if (!isEmail) {
+        // Look up email by username
+        final usernameDoc = await FirebaseFirestore.instance
+            .collection('usernames')
+            .doc(identifier)
+            .get();
+        
+      
+        if (!usernameDoc.exists) {
+          setState(() => errorMessage = 'Username not found');
+          return;
+        }
 
-    // 3. Decrypt the master key
-    final masterKey = decryptMasterKey(encryptedMasterKey, derivedKey); 
+        emailToUse = usernameDoc['email'];
+      }
 
-    // 4. Store master key in session
-    SessionKeyManager().setKey(masterKey);
+      // Sign in with resolved email
+      UserCredential userCredential = await FirebaseAuth.instance
+          .signInWithEmailAndPassword(email: emailToUse, password: passwordText);
 
-    // Proceed to welcome screen
-    emailController.clear();
-    passwordController.clear();
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (context) =>
-            WelcomeScreen(userEmail: userCredential.user!.email!),
-      ),
-    );
-  } catch (e) {
-    setState(() {
-      errorMessage = e.toString();
-    });
+      final uid = userCredential.user!.uid;
+
+      // Get data from userDoc field
+      final userDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+      final salt = userDoc['salt'] as String;
+      final userName = userDoc['username'] as String;
+      final encryptedMasterKey = userDoc['encryptedMasterKey'] as String;
+      final derivedKey = await deriveKeyFromPasswordAndSalt(passwordText, salt);
+      final masterKey = decryptMasterKey(encryptedMasterKey, derivedKey);
+
+      SessionKeyManager().setKey(masterKey);
+
+      // Clear fields and navigate
+      identifierController.clear();
+      passwordController.clear();
+
+  
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => WelcomeScreen(userEmail: emailToUse,username: userName),
+        ),
+      );
+    } catch (e) {
+      setState(() {
+        errorMessage = 'Login failed: ${e.toString()}';
+      });
+    }
   }
-}
-
 
   @override
   Widget build(BuildContext context) {
@@ -88,15 +107,19 @@ class _LoginScreenState extends State<LoginScreen> {
         child: Column(
           children: [
             TextField(
-              controller: emailController,
-              decoration:
-                  InputDecoration(labelText: 'Email', hintText: 'Enter email'),
+              controller: identifierController,
+              decoration: InputDecoration(
+                labelText: 'Username or Email',
+                hintText: 'Enter your username or email',
+              ),
             ),
             TextField(
               controller: passwordController,
               obscureText: true,
               decoration: InputDecoration(
-                  labelText: 'Password', hintText: 'Enter password'),
+                labelText: 'Password',
+                hintText: 'Enter your password',
+              ),
             ),
             SizedBox(height: 20),
             ElevatedButton(onPressed: signIn, child: Text('Sign In')),
