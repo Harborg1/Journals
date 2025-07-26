@@ -1,4 +1,5 @@
 import 'dart:typed_data';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -39,9 +40,10 @@ class _JournalScreenState extends State<JournalScreen> {
     if (_pickedImages.isEmpty) return [];
 
     List<String> downloadUrls = [];
+    final uid = FirebaseAuth.instance.currentUser!.uid;
 
     for (int i = 0; i < _pickedImages.length; i++) {
-      final fileName = 'journal_images/${DateTime.now().millisecondsSinceEpoch}_$i.jpg';
+      final fileName = 'journal_images/$uid/${DateTime.now().millisecondsSinceEpoch}_$i.jpg';
       final ref = FirebaseStorage.instance.ref().child(fileName);
 
       try {

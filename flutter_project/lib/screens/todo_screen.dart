@@ -10,11 +10,11 @@ class ToDo extends StatefulWidget {
 class _ToDoState extends State<ToDo> {
   final List<Map<String, dynamic>> _todos = [];
   final TextEditingController _controller = TextEditingController();
-  static const int maxItems = 5;
+  int _taskLimit = 3; // Default limit is 3
 
   void _addTodo() {
     final text = _controller.text.trim();
-    if (text.isNotEmpty && _todos.length < maxItems) {
+    if (text.isNotEmpty && _todos.length < _taskLimit) {
       setState(() {
         _todos.add({'text': text, 'done': false});
         _controller.clear();
@@ -28,12 +28,11 @@ class _ToDoState extends State<ToDo> {
     });
 
     // Check for completion
-   if (_todos.length == maxItems && _todos.every((item) => item['done'])) {
-  WidgetsBinding.instance.addPostFrameCallback((_) {
-    Navigator.pop(context, true);
-  });
-}
-
+    if (_todos.length == _taskLimit && _todos.every((item) => item['done'])) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Navigator.pop(context, true); // or trigger animation before this
+      });
+    }
   }
 
   void _deleteTodo(int index) {
@@ -42,33 +41,70 @@ class _ToDoState extends State<ToDo> {
     });
   }
 
+  void _setTaskLimit(int newLimit) {
+    if (_todos.length <= newLimit) {
+      setState(() {
+        _taskLimit = newLimit;
+      });
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(
+            'Reduce tasks to ${newLimit} or fewer before changing the limit.'),
+      ));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final isLimitReached = _todos.length >= maxItems;
+    final isLimitReached = _todos.length >= _taskLimit;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Your ToDo List')),
+      appBar: AppBar(title: const Text('')),
       body: Column(
         children: [
           Padding(
             padding: const EdgeInsets.all(12),
-            child: Row(
+            child: Column(
               children: [
-                Expanded(
-                  child: TextField(
-                    controller: _controller,
-                    decoration: InputDecoration(
-                      labelText: 'Enter task',
-                      border: const OutlineInputBorder(),
-                      errorText: isLimitReached ? 'Max 5 tasks' : null,
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _controller,
+                        decoration: InputDecoration(
+                          labelText: 'Enter task',
+                          border: const OutlineInputBorder(),
+                          errorText: isLimitReached ? 'Limit reached' : null,
+                        ),
+                        onSubmitted: (_) => _addTodo(),
+                      ),
                     ),
-                    onSubmitted: (_) => _addTodo(),
-                  ),
+                    const SizedBox(width: 8),
+                    ElevatedButton(
+                      onPressed: isLimitReached ? null : _addTodo,
+                      child: const Icon(Icons.add),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 8),
-                ElevatedButton(
-                  onPressed: isLimitReached ? null : _addTodo,
-                  child: const Icon(Icons.add),
+                const SizedBox(height: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Text("Select number of tasks: "),
+                    DropdownButton<int>(
+                      value: _taskLimit,
+                      items: List.generate(
+                        5,
+                        (i) => DropdownMenuItem(
+                          value: i + 1,
+                          child: Text('${i + 1}'),
+                        ),
+                      ),
+                      onChanged: (val) {
+                        if (val != null) _setTaskLimit(val);
+                      },
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -100,9 +136,9 @@ class _ToDoState extends State<ToDo> {
                       );
                     },
                   ),
-              ),
-            ],
           ),
-        );
-      }
-    }
+        ],
+      ),
+    );
+  }
+}

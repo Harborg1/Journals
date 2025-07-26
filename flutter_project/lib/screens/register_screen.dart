@@ -72,9 +72,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
       // 7. Store username → email mapping for login lookup
       await FirebaseFirestore.instance
-          .collection('usernames')
-          .doc(usernameText)
-          .set({'email': emailText});
+      .collection('usernames')
+      .doc(usernameText)
+      .set({
+        'email': emailText,
+        'userId': uid, 
+      });
 
       // 8. Store master key in session
       SessionKeyManager().setKey(masterKey);

@@ -22,7 +22,6 @@ void main() async {
     ),
   );
 }
-
 class MyCustomScrollBehavior extends MaterialScrollBehavior {
   @override
   Set<PointerDeviceKind> get dragDevices => {
@@ -44,8 +43,6 @@ class MyApp extends StatelessWidget {
       theme: lightMode,
       darkTheme: darkMode,
       themeMode: themeProvider.themeMode,
-
-      // 👇 Enable mouse dragging globally
       scrollBehavior: MyCustomScrollBehavior(),
     );
   }
