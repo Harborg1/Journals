@@ -1,3 +1,4 @@
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_project/security/encryption_helper.dart';
@@ -311,6 +312,16 @@ final PageController _pageController = PageController(viewportFraction: 0.98);
                               );
 
                               if (confirm == true) {
+                                final List<String> imageUrls = List<String>.from(entry['image_urls'] ?? []);
+                                for (final url in imageUrls) {
+                                  try {
+                                    final ref = FirebaseStorage.instance.refFromURL(url);
+                                    await ref.delete();
+                                  } catch (e) {
+                                    print('Failed to delete image: $e');
+                                  }
+                                }
+
                                 await docRef.delete();
                                 _refreshEntries();
                                 scaffoldMessenger.showSnackBar(
