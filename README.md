@@ -15,6 +15,6 @@ A journaling web app built with Flutter and Dart. Users can register, log in, an
 - Android Studio and VSCode
 
 ### Using the app
-Copy the URL below
+Copy the URL into any browser
 https://journals-5832e.web.app/
 Register a user or log in and you are ready to go! :-)
