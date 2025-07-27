@@ -49,4 +49,4 @@ app.*.map.json
 
 # Firebase config (prevent accidental API key leak)
 lib/firebase_options.dart
-/android/app/google-services.json
+android/app/google-services.json
