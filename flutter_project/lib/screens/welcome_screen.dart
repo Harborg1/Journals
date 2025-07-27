@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart' as lottie;
+import 'package:flutter/animation.dart'; // required for AnimationController
 import 'package:flutter_project/screens/journal_entries_screen.dart';
 import 'package:flutter_project/screens/settings_screen.dart';
 import 'package:flutter_project/screens/todo_screen.dart';
@@ -11,14 +12,16 @@ import 'login_screen.dart';
 class WelcomeScreen extends StatefulWidget {
   final String userEmail;
   final String username;
-  const WelcomeScreen({super.key, required this.userEmail,required this.username});
+  const WelcomeScreen({super.key, required this.userEmail, required this.username});
 
   @override
   State<WelcomeScreen> createState() => _WelcomeScreenState();
 }
 
-class _WelcomeScreenState extends State<WelcomeScreen> {
+class _WelcomeScreenState extends State<WelcomeScreen> with TickerProviderStateMixin {
   bool showTree = false;
+  bool animationCompleted = false;
+  AnimationController? _animationController;
 
   void _openToDoScreen() async {
     final result = await Navigator.push(
@@ -27,14 +30,32 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
     );
 
     if (result == true) {
+      _animationController?.dispose(); // Dispose old controller if exists
+
+      _animationController = AnimationController(vsync: this);
+      _animationController!.addStatusListener((status) {
+        if (status == AnimationStatus.completed) {
+          setState(() {
+            animationCompleted = true;
+          });
+        }
+      });
+
       setState(() {
         showTree = true;
+        animationCompleted = false; // Reset to show new animation
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('🌱 You completed all tasks!')),
       );
     }
+  }
+
+  @override
+  void dispose() {
+    _animationController?.dispose();
+    super.dispose();
   }
 
   @override
@@ -94,51 +115,49 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    if (showTree)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 24.0),
-                      child: SizedBox(
-                        height: 200,
-                        child: _buildTreeAnimation(),
+                    if (showTree && !animationCompleted)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 24.0),
+                        child: SizedBox(
+                          height: 200,
+                          child: _buildTreeAnimation(),
+                        ),
                       ),
-                    ),
-                     
                     const SizedBox(height: 16),
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
                         onPressed: () async {
-                        final user = FirebaseAuth.instance.currentUser;
-                        if (user == null) return;
+                          final user = FirebaseAuth.instance.currentUser;
+                          if (user == null) return;
 
-                        final uid = user.uid;
-                        final email = user.email;
+                          final uid = user.uid;
+                          final email = user.email;
 
-                        try {
-                          final doc = await FirebaseFirestore.instance
-                              .collection('users')
-                              .doc(uid)
-                              .get();
+                          try {
+                            final doc = await FirebaseFirestore.instance
+                                .collection('users')
+                                .doc(uid)
+                                .get();
 
-                          final username = doc['username'] as String;
+                            final username = doc['username'] as String;
 
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => JournalScreen(
-                                userId: uid,
-                                userEmail: email,
-                                userName: username,
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => JournalScreen(
+                                  userId: uid,
+                                  userEmail: email,
+                                  userName: username,
+                                ),
                               ),
-                            ),
-                          );
-                        } catch (e) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Failed to load user data')),
-                          );
-                        }
-                      },
-
+                            );
+                          } catch (e) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Failed to load user data')),
+                            );
+                          }
+                        },
                         child: const Text('Write Journal'),
                       ),
                     ),
@@ -182,15 +201,21 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
       ),
     );
   }
+
   Widget _buildTreeAnimation() {
-  try {
-    return lottie.Lottie.asset(
-      'assets/tree_plant.json',
-      repeat: false,
-    );
-  } catch (e) {
-    debugPrint('Lottie load error: $e');
-    return const Text('Animation failed to load');
+    try {
+      return lottie.Lottie.asset(
+        'assets/tree_plant.json',
+        controller: _animationController,
+        onLoaded: (composition) {
+          _animationController?.duration = composition.duration;
+          _animationController?.forward();
+        },
+        repeat: false,
+      );
+    } catch (e) {
+      debugPrint('Lottie load error: $e');
+      return const Text('Animation failed to load');
     }
   }
 }

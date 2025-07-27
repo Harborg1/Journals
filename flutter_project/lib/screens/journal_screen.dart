@@ -61,11 +61,18 @@ class _JournalScreenState extends State<JournalScreen> {
 
     return downloadUrls;
   }
+void saveJournalEntry() async {
+  final entry = journalController.text.trim();
 
-  void saveJournalEntry() async {
-    final entry = journalController.text.trim();
+  if (entry.isNotEmpty || _pickedImages.isNotEmpty) {
+    // Show loading dialog
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(child: CircularProgressIndicator()),
+    );
 
-    if (entry.isNotEmpty || _pickedImages.isNotEmpty) {
+    try {
       final encryptedEntry = EncryptionHelper.encryptText(entry);
       final imageUrls = await uploadImagesIfPresent();
 
@@ -79,25 +86,37 @@ class _JournalScreenState extends State<JournalScreen> {
         'createdAt': Timestamp.now(),
       });
 
+      if (mounted) {
+        Navigator.of(context).pop(); // Close loading spinner
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Journal entry saved!')),
+        );
+
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(
+            builder: (context) => WelcomeScreen(
+              userEmail: widget.userEmail ?? '',
+              username: widget.userName ?? '',
+            ),
+          ),
+          (route) => false,
+        );
+
+        journalController.clear();
+        setState(() {
+          _pickedImages.clear();
+          _imageBytesList.clear();
+        });
+      }
+    } catch (e) {
+      if (mounted) Navigator.of(context).pop(); // Always close loading dialog
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Journal entry saved!')),
+        SnackBar(content: Text('Error saving journal: $e')),
       );
-
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(
-          builder: (context) => WelcomeScreen(userEmail: widget.userEmail ?? '', username: widget.userName?? ''),
-        ),
-        (route) => false,
-      );
-
-      journalController.clear();
-      setState(() {
-        _pickedImages.clear();
-        _imageBytesList.clear();
-      });
     }
   }
+}
 
   @override
   Widget build(BuildContext context) {

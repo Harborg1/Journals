@@ -88,24 +88,32 @@ class _ToDoState extends State<ToDo> {
                 ),
                 const SizedBox(height: 12),
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Text("Select number of tasks: "),
-                    DropdownButton<int>(
-                      value: _taskLimit,
-                      items: List.generate(
-                        5,
-                        (i) => DropdownMenuItem(
-                          value: i + 1,
-                          child: Text('${i + 1}'),
-                        ),
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text("Set task limit (1–10): "),
+                  SizedBox(
+                    width: 60,
+                    child: TextField(
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(
+                        isDense: true,
+                        contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                       ),
-                      onChanged: (val) {
-                        if (val != null) _setTaskLimit(val);
+                      onSubmitted: (value) {
+                        final newLimit = int.tryParse(value);
+                        if (newLimit != null && newLimit >= 1 && newLimit <= 10) {
+                          _setTaskLimit(newLimit);
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                            content: Text('Please enter a number between 1 and 10.'),
+                          ));
+                        }
                       },
                     ),
-                  ],
-                ),
+                  ),
+                ],
+              ),
+
               ],
             ),
           ),
