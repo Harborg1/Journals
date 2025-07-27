@@ -23,18 +23,8 @@ Press F5
 4. Configure Firebase for your Flutter app  
    In your Flutter project directory, run:
    flutterfire configure
-der er ikke 
-   - Select platforms (web, android, etc.)
-   - This generates a file: lib/firebase_options.dart
-
+   
 5. Update your main.dart file  
-   Import the options file:
-   import 'firebase_options.dart';
-
-   And update Firebase initialization:
-   await Firebase.initializeApp(
-     options: DefaultFirebaseOptions.currentPlatform,
-   );
 
 6. Run the command flutter build web
 
