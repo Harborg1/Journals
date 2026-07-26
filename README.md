@@ -6,13 +6,7 @@ A journaling web app built with Flutter and Dart. Users can register, log in, an
 
 - **Secure Registration & Login** using Firebase Authentication
 - **Encryption by Default**: Entries are encrypted with a master key and the master key is decrypted using a derived key from the user's password and salt.
-- **Firebase Firestore Integration** for real-time data. 
-
-### Prerequisites
-
-- Flutter SDK
-- Firebase project (with Authentication and Firestore enabled)
-- Android Studio and VSCode
+- **Firebase Firestore Integration** for journal posts and images.
 
 ### Using the app
 Copy the URL into any browser
