@@ -43,6 +43,10 @@
 	</array>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>Journal uses the camera to attach photos to journal entries.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Journal uses the photo library to attach photos to journal entries.</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 </dict>

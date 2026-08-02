@@ -144,9 +144,9 @@ class _ToDoState extends State<ToDo> {
                       );
                     },
                   ),
-          ),
-        ],
-      ),
-    );
-  }
-}
+                ),
+              ],
+            ),
+          );
+        }
+      }

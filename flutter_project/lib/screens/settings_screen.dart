@@ -184,17 +184,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
               onTap: _changePassword,
             ),
                   ListTile(
-          title: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: const [
-              Text('Delete Account'),
-              Icon(Icons.delete_forever),
-            ],
-          ),
-          onTap: _showDeleteAccountDialog,
-        ),
-        ],
-      ),
-    );
-  }
-}
+                  title: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: const [
+                      Text('Delete Account'),
+                      Icon(Icons.delete_forever),
+                    ],
+                  ),
+                  onTap: _showDeleteAccountDialog,
+                ),
+                ],
+              ),
+            );
+          }
+        }

@@ -25,15 +25,47 @@ class _JournalScreenState extends State<JournalScreen> {
   List<XFile> _pickedImages = [];
   List<Uint8List> _imageBytesList = [];
 
-  Future<void> pickImages() async {
-    final image = await _picker.pickImage(source: ImageSource.gallery);
-    if (image != null) {
-      final bytes = await image.readAsBytes();
-      setState(() {
-        _pickedImages.add(image);
-        _imageBytesList.add(bytes);
-      });
-    }
+  Future<void> _pickImage(ImageSource source) async {
+    final image = await _picker.pickImage(source: source);
+    if (image == null) return;
+
+    final bytes = await image.readAsBytes();
+    if (!mounted) return;
+
+    setState(() {
+      _pickedImages.add(image);
+      _imageBytesList.add(bytes);
+    });
+  }
+
+  void _showImageSourcePicker() {
+    showModalBottomSheet<void>(
+      context: context,
+      builder: (BuildContext sheetContext) {
+        return SafeArea(
+          child: Wrap(
+            children: [
+              ListTile(
+                leading: const Icon(Icons.camera_alt),
+                title: const Text('Take photo'),
+                onTap: () async {
+                  Navigator.of(sheetContext).pop();
+                  await _pickImage(ImageSource.camera);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.photo_library),
+                title: const Text('Choose from library'),
+                onTap: () async {
+                  Navigator.of(sheetContext).pop();
+                  await _pickImage(ImageSource.gallery);
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   Future<List<String>> uploadImagesIfPresent() async {
@@ -158,7 +190,7 @@ void saveJournalEntry() async {
                       Row(
                         children: [
                           ElevatedButton.icon(
-                            onPressed: pickImages,
+                            onPressed: _showImageSourcePicker,
                             icon: Icon(Icons.photo_library),
                             label: Text('Add Image'),
                           ),
